@@ -1,3 +1,9 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
 const int success_graph = 0;
 const int badsize_graph = 1;
 const int malloc_graph = 2;
@@ -7,7 +13,7 @@ const int error_graph = 4;
 class graph {
 private:
 	int size;
-	int * matrix;
+	vector < vector<int> > matrix;
 	int * buf;
 public:
 	graph();
@@ -18,7 +24,7 @@ public:
 	void add_edges(int* vertices, int size);
 	void print_graph();
 	void print_buf();
-	void dfs(int root);
-	void dfs_visit(int v, int times);
-	void bfs(int root);
+	void dfs(int root); // помещает в буфер 1, если путь существует, -1 в противном случае
+	void dfs_visit(int v);
+	void bfs(int root); // помещает в буфер длину наименьшего пути для каждой вершины, если пути не существует, то выводим -1
 };

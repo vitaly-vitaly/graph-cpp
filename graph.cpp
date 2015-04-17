@@ -13,13 +13,9 @@ graph::graph(int val) {
 		throw badsize_graph;
 		return;
 	}
-	matrix = new int[val * val];
+	matrix = vector< vector<int> > (val);
 	buf = new int[val];
 	size = val;
-	for(int i = 0; i < size; i++) {
-		for(int j = 0; j < size; j++) matrix[i * size + j] = 0;
-		buf[i] = 0;
-	}
 	return;
 }
 
@@ -28,7 +24,6 @@ graph::graph() {
 }
 
 graph::~graph() {
-	delete [] matrix;
 	delete [] buf;
 }
 
@@ -37,7 +32,7 @@ void graph::add_edge(int vertex1, int vertex2) {
 		throw badsize_graph;
 		return;
 	}
-	matrix[vertex1 * size + vertex2] = 1;
+	matrix[vertex1].push_back(vertex2);
 	return;
 }
 
@@ -49,11 +44,11 @@ void graph::add_edges(int* vertices, int val) {
 }
 
 void graph::print_graph() {
-	int i, j;
 	fprintf(stdout, "\n");
-	for(i = 0; i < size; i++) {
-		for(j = 0; j < size; j++){
-			fprintf(stdout, "%d ", matrix[i * size + j]);
+	for(int i = 0; i < size; i++) {
+		fprintf(stdout, "%d: ", i);
+		for(size_t j = 0; j < matrix[i].size(); j++){
+			fprintf(stdout, "%d ", (int)j);
 		}
 		fprintf(stdout, "\n");
 	}
@@ -63,6 +58,7 @@ void graph::print_graph() {
 void graph::print_buf() {	
 	fprintf(stdout, "\n");
 	int i;
+	fprintf(stdout, "buf: ");
 	for(i = 0; i < size; i++) {
 		fprintf(stdout, "%d ", buf[i]);
 	}
@@ -70,91 +66,53 @@ void graph::print_buf() {
 	return;	
 }
 
-// void dfs(graph *graph, int root, GRERR *err) {
-// 	if(graph == NULL) {
-// 		if(err != NULL) *err = GR_EMPTY;
-// 		return;
-// 	}
-// 	if(root < 0 || root >= graph->size) {
-// 		if(err != NULL) *err = GR_BADSIZE;
-// 		return;
-// 	}
+void graph::dfs(int root) {
+	if(root < 0 || root >= size) {
+		throw badsize_graph;
+		return;
+	}
+	for(int i = 0; i < size; i++) {
+		if(i != root) {
+			buf[i] = -1;
+		}
+	}
+	dfs_visit(root);
+}
 
-// 	int i;
-// 	for(i = 0; i < graph->size; i++) {
-// 		if(i != root) {
-// 			graph->buf[i] = -1;
-// 		}
-// 	}
+void graph::dfs_visit(int v) {
+	buf[v] = 1;
+	for (vector<int>::iterator i = matrix[v].begin(); i != matrix[v].end(); ++i)
+		if (buf[*i] == -1)
+			dfs_visit (*i);
 
-// 	graph->buf[root] = 2;
-// 	dfs_visit(graph, root, 0);
-// 	if(err != NULL) *err = GR_SUCCESS;
-// 	return;	
-// }
+}
 
-// void dfs_visit(graph *graph, int v, int times) {
-// 	int i;
-// 	graph->buf[v] = 2;
-// 	for(i = 0; i < graph->size; i++) {
-// 		if(graph->matrix[v][i] > 0 && graph->buf[i] == -1) {
-// 			dfs_visit(graph, i, times+1);
-// 		}
-// 	}
-// 	graph->buf[v] = 1;
-// }
+void graph::bfs(int root) {
+	if(root < 0 || root >= size) {
+		throw badsize_graph;
+		return;
+	}
+	for(int i = 0; i < size; i++) {
+		if(i != root) {
+			buf[i] = -1;
+		}
+	}
 
-// void bfs(graph *graph, int root, GRERR *err) {
-// 	if(graph == NULL) {
-// 		if(err != NULL) *err = GR_EMPTY;
-// 		return;
-// 	}
-// 	if(root < 0 || root >= graph->size) {
-// 		if(err != NULL) *err = GR_BADSIZE;
-// 		return;
-// 	}
-
-// 	int *color;
-// 	if((color = (int *) calloc(graph->size, sizeof(int))) < 0) {
-// 		if(err != NULL) *err = GR_MALLOC;
-// 		return;
-// 	}
-// 	int *q;
-// 	if((q = (int *) calloc(graph->size, sizeof(int))) < 0) {
-// 		if(err != NULL) *err = GR_MALLOC;
-// 		return;
-// 	}
-// 	int qstart = 0, qend = 0;
-
-// 	int i;
-// 	for(i = 0; i < graph->size; i++) {
-// 		graph->buf[i] = -1;
-// 		color[i] = WHITE;
-// 	}
-
-// 	graph->buf[root] = 0;
-// 	color[root] = GRAY;
-
-// 	q[qend++] = root;
-
-// 	while(qstart != qend) {
-// 		int u = q[qstart++];
-// 		int v;
-// 		for(v = 0; v < graph->size; v++) {
-// 			if(graph->matrix[u][v] > 0 && u != v) {
-// 				if(color[v] == WHITE) {
-// 					color[v] = GRAY;
-// 					graph->buf[v] = graph->buf[u] + 1;
-// 					q[qend++] = v;
-// 				}
-// 			}
-// 		}
-// 		color[u] = BLACK;
-// 	}
-
-// 	free(color);
-// 	free(q);
-
-// 	if(err != NULL) *err = GR_SUCCESS;
-// 	return;	
-// }
+	queue<int> q;
+	q.push(root);
+	vector<bool> used (size);
+	used[root] = true;
+	buf[root] = 0;
+	while (!q.empty()) {
+		int v = q.front();
+		q.pop();
+		for (size_t i = 0; i < matrix[v].size(); ++i) {
+			int to = matrix[v][i];
+			if (!used[to]) {
+				used[to] = true;
+				q.push(to);
+				buf[to] = buf[v] + 1;
+			}
+		}
+	}
+}
